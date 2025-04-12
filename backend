@@ -1,0 +1,63 @@
+# backend.py
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import smtplib
+import random
+import ssl
+import json
+
+app = Flask(__name__)
+CORS(app)
+
+# OTP storage (for testing purposes only, not secure for production)
+otp_storage = {}
+
+@app.route('/')
+def home():
+    return jsonify({"message": "Mind-z Backend is running"})
+
+@app.route('/send-otp', methods=['POST'])
+def send_otp():
+    data = request.json
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"success": False, "message": "Email not provided"}), 400
+
+    otp = str(random.randint(100000, 999999))
+    otp_storage[email] = otp
+
+    try:
+        sender_email = "khusheemt@gmail.com"
+        sender_password = "khushee133"  
+
+        message = f"Subject: Mind-z OTP Verification\n\nYour OTP is: {otp}"
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, email, message)
+
+        return jsonify({"success": True, "message": "OTP sent successfully"})
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/verify-otp', methods=['POST'])
+def verify_otp():
+    data = request.json
+    email = data.get("email")
+    otp = data.get("otp")
+
+    if not email or not otp:
+        return jsonify({"success": False, "message": "Email or OTP not provided"}), 400
+
+    stored_otp = otp_storage.get(email)
+    if stored_otp == otp:
+        return jsonify({"success": True, "message": "OTP verified successfully"})
+    else:
+        return jsonify({"success": False, "message": "Invalid OTP"}), 401
+
+if __name__ == '__main__':
+    app.run(debug=True)
