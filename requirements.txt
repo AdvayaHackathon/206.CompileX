@@ -1,0 +1,10 @@
+streamlit
+streamlit_option_menu
+streamlit_lottie
+streamlit_drawable_canvas
+requests
+flask
+flask_cors
+scikit-learn
+numpy
+pandas
